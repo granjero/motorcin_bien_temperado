@@ -1,4 +1,4 @@
-const PROGMEM uint16_t melody[] = {
+const PROGMEM uint16_t melodia[] = {
 // 1  
 NOTE_C4,  16,
 NOTE_E4,  16,

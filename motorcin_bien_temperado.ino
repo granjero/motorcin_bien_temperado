@@ -7,66 +7,46 @@
 
 AccelStepper stepper(AccelStepper::DRIVER, paso, direccion);
 
-// Tempo
-int tempo = 66;
-
-// notes of the moledy followed by the duration.
-// a 4 means a quarter note, 8 an eighteenth , 16 sixteenth, so on
-// !!negative numbers are used to represent dotted notes,
-// so -4 means a dotted quarter note, that is, a quarter plus an eighteenth!!
-
-
-// there are two values per note (pitch and duration), so for each note there are four bytes
-int notes = sizeof(melody) / sizeof(melody[0]) / 2;
-
-// this calculates the duration of a whole note in ms (60s/tempo)*4 beats
-int wholenote = (60000 * 4) / tempo;
-
-int divider = 0, noteDuration = 0;
-
-unsigned long previousMillis = 0;
-
-long interval = 0;
+int tempo = 66; // Tempo
+int cantNotas = sizeof(melodia) / sizeof(melodia[0]) / 2; // se divide por 2 porque el array tiene frecuencia - tempo (dos valores)
+int negra = (60000 * 4) / tempo; // calcula el tiempo de una negra en ms (60s/tempo)*4 tiempos
+int divisor = 0, duracionNota = 0;
+long intervalo = 0;
 
 void setup() {
-
-  Serial.begin(115200);
-  stepper.setMaxSpeed(1000);
-  stepper.setAcceleration(5);
+  stepper.setMaxSpeed(5000);
+  stepper.setAcceleration(150);
   stepper.setSpeed(0);
 
-  Serial.println(" - : ");
+  Serial.begin(115200);
+   Serial.println("Inicio : ");
 }
 
 void loop() {
-  // iterate over the notes of the melody.
-  // Remember, the array is twice the number of notes (notes + durations)
-  for (int thisNote = 0; thisNote < notes * 2; thisNote = thisNote + 2) {
-    // calculates the duration of each note
-    divider = melody[thisNote + 1];
-    if (divider > 0) {
-      // regular note, just proceed
-      noteDuration = (wholenote) / divider;
-    } else if (divider < 0) {
-      // dotted notes are represented with negative durations!!
-      noteDuration = (wholenote) / abs(divider);
-      noteDuration *= 1.5;  // increases the duration in half for dotted notes
-    }
-    Serial.print(noteDuration);
-    Serial.print(" ms - ");
-    Serial.print(melody[thisNote]);
-    Serial.println(" *");
+  // itera sobre el array de notas de la melodia, tiene dos por coso
+  for (int thisNote = 0; thisNote < cantNotas * 2; thisNote += 2) {
+    // calcula la duracion de cada nota
+    divisor = pgm_read_word(&melodia[thisNote + 1]);
+    duracionNota = divisor > 0 ? (negra / divisor) : (negra / abs(divisor) * 1.5); // duracion negativa es como el punto en la nota
 
-    // we only play the note for 90% of the duration, leaving 10% as a pause
-    // tone(buzzer, melody[thisNote], noteDuration * 0.9);
-    stepper.setSpeed(melody[thisNote]);
-    unsigned long startTime = millis();
+    Serial.print(" Duracion en ms: ");
+    Serial.print(duracionNota);
+    Serial.print(" Frecuencia de esta nota: ");
+    Serial.print(pgm_read_word(&melodia[thisNote]));
+    Serial.println("");
+
+    stepper.setSpeed(pgm_read_word(&melodia[thisNote]));
+    unsigned long tiempoNotaComienzo = millis();
+
     while (1) {
       stepper.runSpeed();
-      if (millis() - startTime >= noteDuration) break;  // Exit the loop if we've exceeded the play duration
+      if (millis() - tiempoNotaComienzo >= duracionNota) break;  // suena la nota durante el tiempo de duracion
     }
   }
+  stepper.setSpeed(pgm_read_word(&melodia[cantNotas - 1]));
+  stepper.runToNewPosition(stepper.currentPosition() + 5000);
+ 
   stepper.disableOutputs();
-  delay(60000);
+  delay(300000); // 5 minutos
   stepper.enableOutputs();
 }
