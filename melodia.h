@@ -1,4 +1,4 @@
-const PROGMEM uint16_t melodia[] = {
+const uint16_t melodia[] PROGMEM = {
 // 1 OK
 NOTE_C4,  16,  // 1
 NOTE_E4,  16,  // 2
@@ -646,6 +646,5 @@ NOTE_E4,  16,  // 7
 NOTE_D4,  16,  // 8
 
 // 35
-
 NOTE_C4, 1,
 };
